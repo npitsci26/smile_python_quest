@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slime's Python Quest - เกมผจญภัยสอนเขียนโค้ดสำหรับเด็ก</title>
+    <!-- โหลด Tailwind CSS เพื่อความสวยงามในการวาง Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- โหลด Google Fonts น่ารักๆ (Fredoka & Sarabun) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome ไอคอนน่ารักๆ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- CodeMirror (Editor เขียนโค้ดในเบราว์เซอร์) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/python/python.min.js"></script>
+    <!-- Pyodide (สำหรับรันโค้ด Python ฝั่ง Client) -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+
+    <style>
+        body {
+            font-family: 'Sarabun', 'Fredoka', sans-serif;
+            background-color: #f7f5f0;
+            /* ป้องกันการคลุมดำลากข้อความเพื่อแกะคำตอบบางจุด */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        h1, h2, h3, h4, .brand-font {
+            font-family: 'Fredoka', 'Sarabun', sans-serif;
+        }
+        /* กำหนดขนาดของ CodeMirror ให้อ่านง่าย */
+        .CodeMirror {
+            height: 280px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        /* คอร์เนอร์ความน่ารักของฉากหลัง */
+        .playful-bg {
+            background-image: radial-gradient(circle at 10% 15%, rgba(136, 217, 188, 0.15) 0%, transparent 35%),
+                              radial-gradient(circle at 90% 85%, rgba(163, 148, 242, 0.15) 0%, transparent 40%);
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="playful-bg min-h-screen p-4 md:p-8 flex items-center justify-center">
+
+    <!-- 0. หน้าแนะนำต้อนรับก่อนเริ่มเกม (Welcome Screen Cover) -->
+    <div id="welcome-screen" class="fixed inset-0 z-50 bg-[#2c3e50] flex items-center justify-center p-4">
+        <div class="max-w-xl w-full bg-white rounded-3xl p-8 border-4 border-amber-200 text-center shadow-2xl space-y-6">
+            <div class="bg-[#88D9BC] text-[#1F2E3D] p-5 rounded-3xl text-5xl inline-block animate-bounce mb-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Slime's Python Quest</h1>
+            <p class="text-sm md:text-base text-gray-600 leading-relaxed">
+                ยินดีต้อนรับเหล่านักผจญภัยตัวน้อย! มาร่วมเดินทางไปกับ <span class="font-bold text-[#38a385]">น้องสไลม์เขียว</span> เพื่อค้นหาคาถาเวทมนตร์ภาษา Python ตะลุยด่าน คลายคำถามตรรกะ และค้นหาหีบสมบัติทองคำกันนะคะ!
+            </p>
+            <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-left text-xs md:text-sm text-amber-950 space-y-2">
+                <div class="font-bold text-amber-800"><i class="fa-solid fa-shield-halved"></i> กติกาการผจญภัยของด่านระดับเซียน:</div>
+                <p>1. หนู ๆ จะต้องพิชิตภารกิจย่อยเขียนโค้ดจริงให้ผ่านครบทั้ง <strong>5 ข้อ</strong> ประจำด่านก่อน</p>
+                <p>2. สลับไปเล่น <strong>"แบบทดสอบตรรกะ"</strong> และตอบให้ถูกต้องอย่างน้อย <strong>4 ใน 5 ข้อ</strong></p>
+                <p>3. เมื่อเกณฑ์ผ่านครบถ้วน คัมภีร์ลับด่านถัดไปจึงจะเปิดปลดล็อกให้เดินทางต่อนะคะ!</p>
+            </div>
+            <button onclick="startGame()" class="w-full bg-[#ff9f89] hover:bg-[#e58d79] text-white font-bold py-4 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                เริ่มต้นเขียนโค้ดกู้โลกกันเลย! <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 0.5 หน้าต่างแสดงเนื้อหาห้องเรียนเตรียมความพร้อมก่อนขึ้นด่านถัดไป (Knowledge preview Hub) -->
+    <div id="knowledge-hub" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
+        <div class="max-w-2xl w-full bg-white rounded-3xl p-8 border-4 border-purple-300 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start border-b-2 border-gray-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <span class="bg-purple-100 text-purple-700 p-3 rounded-2xl text-xl font-bold"><i class="fa-solid fa-book"></i></span>
+                    <h2 class="text-xl md:text-2xl font-bold text-purple-950" id="knowledge-title">ห้องเรียนเวทมนตร์ Python</h2>
+                </div>
+                <span class="text-xs bg-purple-100 text-purple-800 font-bold px-3 py-1 rounded-full">คาถาใหม่</span>
+            </div>
+            <div id="knowledge-body" class="space-y-4 text-sm md:text-base text-gray-700 leading-relaxed">
+                <!-- เนื้อหาทฤษฎีที่จะเปลี่ยนไปตามด่านถัดไป -->
+            </div>
+            <div class="pt-4 border-t-2 border-gray-100 flex justify-end">
+                <button onclick="closeKnowledgeHubAndStart()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-2xl transition-all shadow-md flex items-center gap-2">
+                    เข้าใจคำสอนแล้ว เข้าสู่ด่านท้าทายถัดไปกันเลย! <i class="fa-solid fa-circle-check"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN INTERFACE CONTAINER -->
+    <div class="max-w-6xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-[#e3ded5]">
+        <!-- 1. Header แบรนด์และเลือกด่าน -->
+        <div class="bg-[#2c3e50] p-6 text-white flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-[#88D9BC] text-[#1F2E3D] p-3 rounded-2xl text-2xl font-bold animate-bounce">
+                    <i class="fa-solid fa-gamepad"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wide">Slime's Python Quest</h1>
+                    <p class="text-sm text-gray-300">ผจญภัยเรียนเขียนโค้ดและฝึกคิดวิเคราะห์ตรรกะสำหรับเยาวชน 🐍</p>
+                </div>
+            </div>
+            <!-- ปุ่มเลือกด่าน (Level Selector) - พร้อมระบบตรวจสอบการปลดล็อก -->
+            <div class="flex flex-wrap items-center justify-center gap-2">
+                <span class="text-sm font-semibold mr-2 hidden md:inline">ด่านผจญภัย:</span>
+                <button onclick="changeLevel(1)" id="btn-lv1" class="px-3 py-2 rounded-xl text-xs md:text-sm font-bold bg-[#88D9BC] text-[#1F2E3D] transition-all">1. ฝึกเดิน</button>
+                <button onclick="changeLevel(2)" id="btn-lv2" class="px-3 py-2 rounded-xl text-xs md:text-sm font-bold bg-[#34495e] text-white hover:bg-gray-700 transition-all">2. พลังตัวแปร</button>
+                <button onclick="changeLevel(3)" id="btn-lv3" class="px-3 py-2 rounded-xl text-xs md:text-sm font-bold bg-[#34495e] text-white hover:bg-gray-700 transition-all">3. วงล้อลูป</button>
+                <button onclick="changeLevel(4)" id="btn-lv4" class="px-3 py-2 rounded-xl text-xs md:text-sm font-bold bg-[#34495e] text-white hover:bg-gray-700 transition-all">4. ทางแยกมังกร</button>
+            </div>
+        </div>
+
+        <!-- Tab Selector สำหรับสลับระหว่าง การโค้ดจริง VS ควิซท้าทายตรรกะ -->
+        <div class="flex border-b-2 border-[#e3ded5] bg-[#faf9f6]">
+            <button id="tab-coding" onclick="switchTab('coding')" class="flex-1 py-3 font-bold text-xs md:text-sm text-center bg-white border-r-2 border-[#e3ded5] text-[#2c3e50] flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-code text-[#38a385]"></i> 🎮 ตะลุยด่าน (Coding Playground)
+            </button>
+            <button id="tab-quiz" onclick="switchTab('quiz')" class="flex-1 py-3 font-bold text-xs md:text-sm text-center text-gray-500 hover:text-gray-800 flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-brain text-purple-500"></i> 🧠 แบบทดสอบ (Logic Quiz) <span id="quiz-tab-badge" class="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full">0/5</span>
+            </button>
+        </div>
+
+        <!-- 2. พื้นที่หลักการทำงาน (แบ่งครึ่ง ซ้าย-ขวา) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12">
+            
+            <!-- ฝั่งซ้าย: สลับโหมดจำลองคำอธิบาย/Editor กับ หน้าจอแบบทดสอบ (5 คอลัมน์) -->
+            <div class="lg:col-span-5 p-6 bg-[#faf9f6] flex flex-col justify-between border-r-4 border-[#e3ded5]">
+                
+                <!-- VIEW A: โหมดเขียนโค้ด (Coding View Container) -->
+                <div id="coding-view-container" class="flex flex-col justify-between h-full space-y-4">
+                    <div>
+                        <!-- ข้อมูลระดับภารกิจย่อยของด่านนี้ -->
+                        <div class="flex justify-between items-center text-xs font-bold text-[#38a385] mb-2">
+                            <span id="task-progress-text">ภารกิจย่อยที่ 1 / 5</span>
+                            <div class="flex gap-1" id="task-indicators">
+                                <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                            </div>
+                        </div>
+
+                        <!-- คำอธิบายภารกิจ -->
+                        <div class="bg-[#ebf8f4] border-2 border-[#88D9BC] rounded-2xl p-4 mb-4">
+                            <h3 class="text-[#38a385] font-bold text-lg mb-1 flex items-center gap-2">
+                                <i class="fa-solid fa-flag-checkered"></i> <span id="level-title">ภารกิจที่ 1: มุ่งสู่เป้าหมาย</span>
+                            </h3>
+                            <p id="level-desc" class="text-sm text-[#4a5560] leading-relaxed">
+                                พาน้องสไลม์เดินไปทางขวา 3 ก้าว เพื่อเก็บผลเชอร์รี่แสนหวาน! ปรับโค้ดใน Editor ให้ถูกต้องแล้วกดรันได้เลย
+                            </p>
+                        </div>
+
+                        <!-- พื้นที่คู่มือการใช้งานคำสั่ง (Cheat Sheet) -->
+                        <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-3">
+                            <h4 class="text-amber-800 font-bold text-xs mb-1 flex items-center gap-2">
+                                <i class="fa-solid fa-book-open"></i> คาถาเวทมนตร์ในด่านย่อยนี้:
+                            </h4>
+                            <ul id="instructions-list" class="text-xs text-amber-950 space-y-0.5 font-mono list-disc pl-4">
+                                <!-- อัปเดตผ่าน JS ตามภารกิจย่อยที่เลือก -->
+                            </ul>
+                        </div>
+
+                        <!-- โค้ด Editor -->
+                        <div class="mb-3">
+                            <label class="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-2">
+                                <i class="fa-brands fa-python text-yellow-500"></i> แท่นร่ายมนตร์คาถา (Python Editor):
+                            </label>
+                            <textarea id="code-editor-area" class="hidden"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- ปุ่มควบคุม -->
+                    <div class="flex gap-3 pt-1">
+                        <button id="run-btn" onclick="executePlayerCode()" class="flex-1 bg-[#ff9f89] hover:bg-[#e58d79] text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 text-lg">
+                            <i class="fa-solid fa-play"></i> รันคำสั่ง Python
+                        </button>
+                        <button onclick="resetCurrentTask()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-2xl transition-all">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VIEW B: โหมดแบบทดสอบ (Quiz View Container) - ซ่อนไว้ตอนเริ่มแรก -->
+                <div id="quiz-view-container" class="hidden flex flex-col justify-between h-full">
+                    <div class="space-y-4">
+                        <!-- แถบความคืบหน้าสะสมและคะแนนควิซ -->
+                        <div class="flex justify-between items-center text-xs font-bold text-purple-800">
+                            <span id="quiz-progress-text-display">คำถามข้อที่ 1 / 5</span>
+                            <span id="quiz-score-text"><i class="fa-solid fa-star text-amber-500"></i> ถูกแล้ว: 0/5 ข้อ (เกณฑ์ผ่าน: 4/5)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="quiz-progress-bar" class="bg-purple-600 h-2.5 rounded-full transition-all duration-300" style="width: 20%"></div>
+                        </div>
+
+                        <!-- คำถาม -->
+                        <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-4">
+                            <h4 id="quiz-question-title" class="text-[#2b3a4a] font-bold text-sm md:text-base leading-relaxed">
+                                คำถามจะปรากฏที่นี่...
+                            </h4>
+                            <!-- พื้นที่จำลองโค้ดบอร์ดกรณีข้อคำถามมีโค้ดประกอบ -->
+                            <pre id="quiz-code-block" class="hidden mt-2 p-3 bg-gray-800 text-emerald-400 rounded-xl font-mono text-xs overflow-x-auto"></pre>
+                        </div>
+
+                        <!-- ตัวเลือก Choice (A, B, C, D) -->
+                        <div id="quiz-choices-container" class="space-y-2">
+                            <!-- จะป้อนปุ่มคำตอบผ่านฟังก์ชัน JS -->
+                        </div>
+
+                        <!-- พื้นที่อธิบายคุณครูสไลม์ช่วยสอน (Coach Feedback Box) - จะปรากฏเมื่อผู้เล่นกดยืนยันคำตอบ -->
+                        <div id="quiz-feedback-box" class="hidden p-4 rounded-xl border-2 flex items-start gap-3 text-xs mb-4">
+                            <div id="quiz-feedback-icon" class="text-xl"></div>
+                            <div>
+                                <h5 id="quiz-feedback-title" class="font-bold"></h5>
+                                <p id="quiz-feedback-desc" class="text-gray-600 mt-1 leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ปุ่มควบคุมของควิซ -->
+                    <div class="pt-4">
+                        <button id="quiz-action-btn" onclick="handleQuizAction()" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-md">
+                            <span>ยืนยันคำตอบ</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ฝั่งขวา: การแสดงผลภาพกราฟิก (7 คอลัมน์) -->
+            <div class="lg:col-span-7 p-6 flex flex-col justify-between bg-[#fbfbfa]">
+                <div>
+                    <!-- แถบแสดงสถานะข้อความ -->
+                    <div class="mb-4">
+                        <div id="status-bubble" class="bg-blue-50 border-2 border-blue-200 text-blue-800 rounded-2xl p-4 flex items-center gap-3 font-semibold text-sm shadow-sm">
+                            <div id="status-icon" class="text-xl text-blue-500">
+                                <i class="fa-solid fa-circle-info animate-pulse"></i>
+                            </div>
+                            <div id="status-text">กำลังตรวจสอบความพร้อมของพลังเวทมนตร์...</div>
+                        </div>
+                    </div>
+
+                    <!-- Canvas แสดงภาพการเล่นเกมหลัก -->
+                    <div class="relative bg-white border-4 border-[#e3ded5] rounded-3xl overflow-hidden shadow-inner">
+                        <canvas id="stage-canvas" width="600" height="350" class="w-full h-auto block"></canvas>
+                        
+                        <!-- หน้าต่างโมดัลแจ้งผลแพ้/ชนะแบบ Overlay -->
+                        <div id="result-overlay" class="hidden absolute inset-0 bg-black/60 flex items-center justify-center p-6 transition-all duration-300">
+                            <div class="bg-white rounded-3xl p-8 max-w-sm text-center border-4 border-amber-200 shadow-2xl scale-95 transition-all">
+                                <div id="overlay-icon" class="text-6xl mb-4 text-emerald-400">🎉</div>
+                                <h3 id="overlay-title" class="text-2xl font-bold text-gray-800 mb-2">สุดยอดไปเลย!</h3>
+                                <p id="overlay-desc" class="text-gray-600 mb-6 text-sm">น้องสไลม์สามารถผ่านอุปสรรคนี้ไปได้ด้วยคำสั่งที่ยอดเยี่ยมของคุณ!</p>
+                                <button id="overlay-btn" class="w-full bg-[#88D9BC] hover:bg-[#6fc0a4] text-gray-800 font-bold py-3 px-6 rounded-2xl transition-all shadow-md">
+                                    ลุยด่านต่อไป
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- คอนโซลเอาต์พุตแสดงผลการคอมไพล์และลำดับการขยับ -->
+                <div class="mt-4 bg-[#1e293b] text-emerald-400 rounded-2xl p-4 font-mono text-xs shadow-inner">
+                    <div class="text-gray-400 border-b border-gray-700 pb-1 mb-2 flex justify-between items-center">
+                        <span><i class="fa-solid fa-terminal"></i> ข้อมูลการทำงานของระบบ (Console):</span>
+                        <span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-300">Pyodide WebAssembly</span>
+                    </div>
+                    <div id="console-output" class="max-h-[80px] overflow-y-auto space-y-1">
+                        &gt; พร้อมโหลดข้อมูล...
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- --------------------------------------------------------------
+         3. เอนจินการทำงานหลักและโครงสร้างด่านผ่านโค้ด JavaScript
+         -------------------------------------------------------------- -->
+    <script>
+        // --------------------------------------------------------------
+        // 0. ระบบป้องกันการเปิดดูซอร์สโค้ดและแกะควิซ (Source Code Protection)
+        // --------------------------------------------------------------
+        // ป้องกันการคลิกขวา (Disable Right-Click)
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            logToConsole("ระบบล็อกการคลิกขวาเพื่อป้องกันความเป็นส่วนตัวของโค้ดเกมค่ะ 🛡️");
+        });
+
+        // ป้องกันปุ่มคีย์ลัดสำหรับเปิด Developer Tools และ View Source
+        document.addEventListener('keydown', function(e) {
+            // 1. ป้องกัน F12 (KeyCode 123)
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                logToConsole("ระบบล็อกปุ่ม F12 ค่ะ 🛡️");
+                return false;
+            }
+            
+            // 2. ป้องกัน Ctrl + Shift + I (Inspect), Ctrl + Shift + J (Console), Ctrl + Shift + C (Element Selector)
+            if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+                e.preventDefault();
+                logToConsole("ระบบบล็อกการตรวจสอบโค้ดด้วยคีย์ลัดค่ะ 🛡️");
+                return false;
+            }
+
+            // 3. ป้องกัน Ctrl + U (View Source)
+            if (e.ctrlKey && e.keyCode === 85) {
+                e.preventDefault();
+                logToConsole("ระบบบล็อกการเปิดดูซอร์สโค้ด (Ctrl+U) ค่ะ 🛡️");
+                return false;
+            }
+
+            // 4. ป้องกันเวอร์ชัน macOS (Cmd + Option + I / J / C)
+            if (e.metaKey && e.altKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+                e.preventDefault();
+                logToConsole("ระบบบล็อกการตรวจสอบโค้ดบน macOS ค่ะ 🛡️");
+                return false;
+            }
+            
+            // 5. ป้องกัน Cmd + Option + U (View Source on Mac)
+            if (e.metaKey && e.altKey && e.keyCode === 85) {
+                e.preventDefault();
+                logToConsole("ระบบบล็อกการดูซอร์สโค้ดบน macOS ค่ะ 🛡️");
+                return false;
+            }
+        });
+
+        // โครงสร้างข้อมูลด่าน แต่ละด่านจะมี 5 ภารกิจย่อย (Tasks) และควิซ 5 ข้อ
+        const levels = {
+            1: {
+                title: "ด่านที่ 1: การเขียนโค้ดตามลำดับ (Sequential Flow)",
+                tasks: [
+                    {
+                        subTitle: "ภารกิจที่ 1/5: ก้าวแรกแสนหวาน",
+                        description: "พาน้องสไลม์เดินขวา 1 ก้าวเพื่อไปหาผลเชอร์รี่สีแดง ลองใช้ฟังก์ชัน `move_right()` ดูนะ",
+                        cheatSheet: ["move_right() : กระโดดไปทางขวา 1 ช่อง"],
+                        defaultCode: "# ภารกิจที่ 1: พิมพ์คำสั่งสั่งเดินขวา 1 ช่อง\n# พิมพ์ move_right() ไว้ด้านล่างคอมเมนต์นี้ได้เลย\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 2, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 1
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 2/5: สองก้าวแสนอร่อย",
+                        description: "พาน้องสไลม์เดินขวา 2 ก้าว โดยพิมพ์คำสั่ง `move_right()` ในบรรทัดใหม่ให้ทำงานเรียงลำดับจากบนลงล่าง",
+                        cheatSheet: ["move_right() : กระโดดไปทางขวา 1 ช่อง"],
+                        defaultCode: "# ภารกิจที่ 2: พิมพ์คำสั่งสั่งเดินขวา 2 บรรทัด\n# คอมพิวเตอร์จะรันคำสั่งจากบนลงล่างทีละบรรทัด\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 3, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 2
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 3/5: ตัวเลขระบุระยะก้าว",
+                        description: "เราสามารถระบุจำนวนก้าวในวงเล็บได้ เช่น `move_right(3)` เพื่อกระโดด 3 ช่องทีเดียว ลองปรับแก้โค้ดเพื่อกระโดด 3 ช่องสิ",
+                        cheatSheet: ["move_right(steps) : กระโดดขวาตามตัวเลขที่กำหนด"],
+                        defaultCode: "# ภารกิจที่ 3: ใช้ตัวเลขในวงเล็บเพื่อกระโดดทีเดียว 3 ช่อง\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 4, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 3
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 4/5: ผสมผสานพลังก้าว",
+                        description: "เป้าหมายอยู่ห่างออกไป 4 ช่อง ลองเขียนโค้ดเดินผสมกัน 2 บรรทัด เช่น เดินทีละ 2 ก้าวสองรอบ เพื่อให้สไลม์ไปถึงจุดหมาย",
+                        cheatSheet: ["move_right(steps) : กระโดดขวาตามจำนวนที่ระบุ"],
+                        defaultCode: "# ภารกิจที่ 4: พิมพ์คำสั่งเดินผสมกัน 2 บรรทัดเพื่อให้สไลม์เดิน 4 ก้าว\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 5, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 4
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 5/5: สุดขอบฟ้าเชอร์รี่",
+                        description: "เป้าหมายอยู่ที่ช่อง 6 ห่างจากจุดเริ่มต้น 5 ช่องพอดี เขียนคำสั่งเดินขวาด้วยวิธีใดก็ได้ให้สไลม์ไปถึงจุดหมาย!",
+                        cheatSheet: ["move_right() : สั่งเดินขวา"],
+                        defaultCode: "# ภารกิจที่ 5: พาสไลม์เดินขวา 5 ช่องด้วยวิธีเขียนแบบใดก็ได้\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 6, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 5
+                    }
+                ],
+                quiz: [
+                    {
+                        question: "คำสั่งใดคือวิธีเรียกใช้งานฟังก์ชันชื่อ `move_right` ในภาษา Python ได้อย่างถูกต้อง?",
+                        choices: ["move_right", "move_right()", "move_right;", "CALL move_right"],
+                        answerIndex: 1,
+                        explanation: "ใน Python เราเรียกใช้งานฟังก์ชันโดยระบุชื่อตามด้วยเครื่องหมายวงเล็บเปิดปิดเสมอ เช่น move_right() เพื่อสั่งให้โปรแกรมทำงาน"
+                    },
+                    {
+                        question: "ในการทำงานแบบตามลำดับ (Sequential) ภาษา Python จะประมวลผลคำสั่งตามทิศภาพทางใด?",
+                        choices: ["จากบนลงล่าง", "จากล่างขึ้นบน", "สุ่มบรรทัดขึ้นมาทำก่อน", "ทำบรรทัดที่สั้นที่สุดก่อน"],
+                        answerIndex: 0,
+                        explanation: "การทำงานตามลำดับ (Sequential) หมายความว่าคอมพิวเตอร์จะค่อยๆ แปลโค้ดและทำงานทีละบรรทัดจากบนสุดลงมาหาบรรทัดล่างสุดตามลำดับเสมอ"
+                    },
+                    {
+                        question: "หากเราประมวลผลโค้ดนี้ทีละบรรทัด ค่าสุดท้ายของตัวแปร `step` จะมีค่าเท่ากับเท่าใด?",
+                        code: "step = 1\nstep = 2\nstep = 3",
+                        choices: ["1", "2", "3", "6 (เกิดจากการบวกกัน)"],
+                        answerIndex: 2,
+                        explanation: "ตัวแปรจะเก็บค่าล่าสุดเสมอ เนื่องจากภาษาทำงานจากบนลงล่าง การกำหนดค่า step = 3 ในบรรทัดสุดท้ายจึงไปทับค่าเดิมทั้งหมด ทำให้มีค่าเป็น 3"
+                    },
+                    {
+                        question: "จะเกิดอะไรขึ้นหากพิมพ์คำสั่งเป็นตัวอักษรพิมพ์ใหญ่ตัวแรก เช่น `Move_right()` แทนคำสั่ง `move_right()` ที่ถูกต้อง?",
+                        choices: ["เกมยังรันได้ปกติ", "น้องสไลม์จะเดินกลับหลัง", "เกิดข้อผิดพลาดแบบ NameError", "ระบบจะแก้เป็นตัวพิมพ์เล็กให้อัตโนมัติ"],
+                        answerIndex: 2,
+                        explanation: "Python เป็นภาษาที่ Case-sensitive (ใส่ใจตัวอักษรพิมพ์ใหญ่-เล็ก) การพิมพ์ Move_right() ด้วยตัว M ใหญ่ จะทำให้ระบบมองหาฟังก์ชันไม่เจอและเกิด NameError ทันที"
+                    },
+                    {
+                        question: "ทำไมลำดับคำสั่งแบบ Sequential จึงสำคัญอย่างยิ่งในการเขียนโค้ดเพื่อควบคุมตัวละครในเกม?",
+                        choices: ["เพราะทำให้พิมพ์คำสั่งได้เร็วขึ้น", "เพราะคอมพิวเตอร์จำเป็นต้องทำตามขั้นตอนทีละสเต็ปเพื่อผลลัพธ์ที่ถูกต้อง", "เพราะช่วยลบคำสั่งที่ซ้ำซ้อนออกไปให้เอง", "เพราะทำให้ขนาดไฟล์ของโค้ดมีขนาดเล็กลง"],
+                        answerIndex: 1,
+                        explanation: "หากสลับลำดับการทำงาน เช่น สั่งหยิบกุญแจทีหลังการเปิดประตู ตัวละครก็จะไม่สามารถผ่านด่านได้ ลำดับก่อนหลังจึงสำคัญมากในเชิงตรรกะ"
+                    }
+                ]
+            },
+            2: {
+                title: "ด่านที่ 2: พลังของตัวแปรกล่องวิเศษ (Variables)",
+                tasks: [
+                    {
+                        subTitle: "ภารกิจที่ 1/5: กล่องเก็บก้าว",
+                        description: "กำหนดให้ตัวแปร `steps` มีค่าเท่ากับ 3 แล้วเรียกใช้งาน `move_right(steps)` เพื่อพาสไลม์เดิน 3 ช่อง",
+                        cheatSheet: ["ตัวแปร = ค่าข้อมูล : เก็บค่าลงในชื่อกล่องสมบัติ", "move_right(ตัวแปร) : ใช้ค่าในกล่องเพื่อเดินขวา"],
+                        defaultCode: "# ภารกิจที่ 1:\n# 1. ประกาศตัวแปร steps ให้เก็บค่า 3\n# 2. เรียกใช้ฟังก์ชัน move_right โดยส่งตัวแปร steps เข้าไปในวงเล็บ\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 4, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 3
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 2/5: เปลี่ยนแปลงพลังกล่อง",
+                        description: "เป้าหมายเปลี่ยนเป็นช่องที่ 6 (ห่างออกไป 5 ช่อง) ลองแก้ไขค่าที่อยู่ในตัวแปร `steps` ให้เก็บเลข 5 แทนเลขเดิมสิ!",
+                        cheatSheet: ["steps = 5 : อัปเดตข้อมูลกล่องให้มีค่าเป็น 5"],
+                        defaultCode: "# ภารกิจที่ 2:\n# 1. กำหนดตัวแปร steps ให้เก็บเลข 5\n# 2. สั่งเดินขวาโดยส่งตัวแปร steps เข้าไป\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 6, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 5
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 3/5: การประมวลผลรวมในกล่อง",
+                        description: "เราสามารถนำตัวแปรมาคำนวณทางคณิตศาสตร์ได้ กำหนด `a = 2` และ `b = 1` จากนั้นกำหนดให้ `steps = a + b` เพื่อให้ได้ระยะเดิน 3 ช่อง",
+                        cheatSheet: ["a = 2 : ตัวแปรตัวเลข a", "steps = a + b : นำกล่องทั้งสองมาบวกรวมกัน"],
+                        defaultCode: "# ภารกิจที่ 3:\n# 1. สร้าง a = 2\n# 2. สร้าง b = 1\n# 3. กำหนด steps = a + b\n# 4. เรียกใช้ move_right(steps)\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 4, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 3
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 4/5: บวกทับค่าเดิม",
+                        description: "เป้าหมายอยู่ที่ 4 ช่อง ลองเอาตัวแปรเดิมมาบวกเพิ่มในตัวมันเอง กำหนด `x = 2` แล้วอัปเดตค่า `x = x + 2` ก่อนสั่งเดิน `move_right(x)`",
+                        cheatSheet: ["x = x + 2 : นำค่าเก่าใน x มาบวก 2 แล้วบันทึกทับลงกล่อง x เดิม"],
+                        defaultCode: "# ภารกิจที่ 4:\n# 1. สร้างตัวแปร x = 2\n# 2. บวกทับค่าเดิมด้วย x = x + 2 เพื่อให้ได้ผลลัพธ์เป็น 4\n# 3. สั่ง move_right(x)\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 5, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 4
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 5/5: คณิตสะสางสมการ",
+                        description: "เป้าหมายอยู่ห่าง 5 ช่อง ลองระบุสมการการคำนวณ เช่น `steps = 10 - 5` เพื่อสั่งให้สไลม์เดิน 5 ช่องด้วยตัวแปรเดียว",
+                        cheatSheet: ["steps = 10 - 5 : สมมติฐานระยะห่าง"],
+                        defaultCode: "# ภารกิจที่ 5:\n# 1. กำหนดตัวแปร steps ให้เก็บค่าผลลบทางคณิตศาสตร์ที่เท่ากับ 5 (เช่น 10 - 5)\n# 2. สั่ง move_right โดยอ้างอิงตัวแปรดังกล่าว\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 6, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 5
+                    }
+                ],
+                quiz: [
+                    {
+                        question: "ข้อใดคือการสร้างตัวแปรชื่อ `steps` เพื่อเก็บค่าตัวเลข 5 ได้อย่างถูกต้องตามหลัก Python?",
+                        choices: ["steps == 5", "5 = steps", "steps = 5", "steps : 5"],
+                        answerIndex: 2,
+                        explanation: "การกำหนดค่าให้กับตัวแปร in Python จะใช้เครื่องหมายเท่ากับตัวเดียว (=) โดยระบุชื่อตัวแปรไว้ฝั่งซ้าย และค่าที่ต้องการเก็บไว้ฝั่งขวา"
+                    },
+                    {
+                        question: "หากเรามีโค้ด `steps = 2` แล้วเราเรียกใช้คำสั่ง `move_right(steps)` ตัวละครจะเดินไปทางขวาทั้งหมดกี่ช่อง?",
+                        choices: ["1 ช่อง", "2 ช่อง", "3 ช่อง", "เกิดข้อผิดพลาดเพราะส่งตัวแปรเข้าไปในฟังก์ชันไม่ได้"],
+                        answerIndex: 1,
+                        explanation: "เมื่อระบุชื่อตัวแปร steps เข้าไปในวงเล็บ คอมพิวเตอร์จะไปดึงค่าตัวเลข 2 ที่เก็บไว้ในกล่องนั้นออกมาใช้งาน จึงเท่ากับสั่งเดินขวา 2 ก้าว"
+                    },
+                    {
+                        question: "ค่าของตัวแปร `total` จะมีค่าเป็นเท่าใดเมื่อโค้ดนี้ทำงานเสร็จสิ้น?",
+                        code: "a = 3\nb = 4\ntotal = a + b",
+                        choices: ["34", "7", "12", "เกิดข้อผิดพลาด"],
+                        answerIndex: 1,
+                        explanation: "ระบบจะดึงค่าจากตัวแปร a (ซึ่งคือ 3) และ b (ซึ่งคือ 4) มาบวกกันทางคณิตศาสตร์ ผลลัพธ์รวมที่ได้จึงเท่ากับ 7"
+                    },
+                    {
+                        question: "ชื่อตัวแปรในข้อใดต่อไปนี้ที่ผิดกฎการตั้งชื่อตัวแปรในภาษา Python และใช้งานไม่ได้?",
+                        choices: ["steps_count", "steps2", "2steps", "_steps"],
+                        answerIndex: 2,
+                        explanation: "กฎการตั้งชื่อตัวแปรในภาษา Python ห้ามขึ้นต้นด้วยตัวเลขเด็ดขาด (เช่น 2steps) แต่สามารถนำตัวเลขไปไว้ข้างท้ายหรือใช้เครื่องหมายขีดล่าง (_) ได้"
+                    },
+                    {
+                        question: "หลังจากรันโค้ดชุดนี้เสร็จสิ้นแล้ว ตัวแปร `x` จะมีค่าเท่ากับเท่าใด?",
+                        code: "x = 10\nx = x + 5",
+                        choices: ["10", "5", "15", "เกิดข้อผิดพลาดรันไม่ได้"],
+                        answerIndex: 2,
+                        explanation: "บรรทัดที่สองระบุว่า x = x + 5 หมายความว่าให้นำค่าเดิมของ x (คือ 10) มาบวกเพิ่มอีก 5 แล้วเซฟกลับลงไปในตัวแปร x ทำให้ได้ผลรวมใหม่เป็น 15"
+                    }
+                ]
+            },
+            3: {
+                title: "ด่านที่ 3: วงล้อลูปก้าวข้ามกองไฟ (Loops)",
+                tasks: [
+                    {
+                        subTitle: "ภารกิจที่ 1/5: หมุนรอบสามก้าว",
+                        description: "ใช้ For Loop สั่งเดินขวาซ้ำ 3 ช่องเพื่อเก็บเชอร์รี่ที่อยู่ห่างออกไป 3 ช่อง",
+                        cheatSheet: ["for i in range(รอบ): : บล็อกวนซ้ำคำสั่งที่อยู่ด้านในด้านย่อหน้า"],
+                        defaultCode: "# ภารกิจที่ 1: สั่ง For Loop วนลูป 3 รอบ\n# 1. เขียนหัวลูป for i in range(3):\n# 2. พิมพ์คำสั่ง move_right() ในย่อหน้าเยื้องด้านล่าง\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 4, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 3
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 2/5: กระโดดข้ามพิกัดไฟ",
+                        description: "มีกองไฟอันตรายขวางอยู่ที่ช่อง 2 และ 3! ลองเขียนคำสั่งลูปวนซ้ำ 2 รอบเพื่อให้สไลม์กระโดด `jump()` ข้ามไฟอย่างปลอดภัย",
+                        cheatSheet: ["jump() : กระโดดขยับไปข้างหน้าอย่างปลอดภัย"],
+                        defaultCode: "# ภารกิจที่ 2: วนลูป 2 รอบ\n# พิมพ์คำสั่ง jump() เยื้องไว้ใต้ลูปเพื่อขยับหลบกองไฟพิกัดอันตราย\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 3, y: 3},
+                        obstacles: [{x: 2, type: 'fire'}, {x: 3, type: 'fire'}],
+                        validate: (actions) => {
+                            let x = 1;
+                            for (let a of actions) {
+                                if (a === "jump") x++;
+                            }
+                            return x === 3 && actions.every(a => a === "jump");
+                        }
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 3/5: เดินขวาสลับโดดซ้ำ",
+                        description: "กองไฟขวางที่ช่อง 3 และ 5! เราต้องสั่ง 'เดินขวาแล้วกระโดด' สลับกัน 2 รอบเพื่อความปลอดภัย ลองระบุคำสั่งคู่กันใต้ลูป",
+                        cheatSheet: ["move_right() : เดินปกติ", "jump() : กระโดดผ่านไฟ"],
+                        defaultCode: "# ภารกิจที่ 3: วนลูป 2 รอบ\n# 1. พิมพ์คำสั่ง for i in range(2):\n# 2. บรรทัดย่อหน้าด้านล่างให้พิมพ์ move_right() และ jump() ในย่อหน้าที่ตรงกัน\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 5, y: 3},
+                        obstacles: [{x: 3, type: 'fire'}, {x: 5, type: 'fire'}],
+                        validate: (actions) => {
+                            let x = 1;
+                            let success = true;
+                            for (let a of actions) {
+                                if (a === "move_right") x++;
+                                else if (a === "jump") x++;
+                                if (a !== "jump" && (x === 3 || x === 5)) success = false;
+                            }
+                            return success && x === 5;
+                        }
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 4/5: ลูปไกลสี่หน่วย",
+                        description: "ใช้ For Loop สั่งเดินขวา 4 รอบเพื่อให้สไลม์เดินข้ามกระดานไปหาเชอร์รี่ที่อยู่ห่างออกไป 4 ช่อง",
+                        cheatSheet: ["range(4) : ทำซ้ำครบ 4 ครั้ง"],
+                        defaultCode: "# ภารกิจที่ 4: สั่ง For Loop เดิน 4 รอบ\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 5, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 4
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 5/5: ยอดนักฝ่ากองไฟสามสเต็ป",
+                        description: "กองไฟเรียงที่ช่อง 3, 5, และ 7! สั่งเดินสลับกระโดดทำซ้ำแบบนี้ทั้งหมด 3 รอบเพื่อเก็บเชอร์รี่ที่ช่อง 7",
+                        cheatSheet: ["for i in range(3): : สั่งลูปย่อหน้าสลับแบบพฤติกรรม"],
+                        defaultCode: "# ภารกิจที่ 5: สั่ง For Loop 3 รอบให้เดินขวาสลับกระโดด\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 7, y: 3},
+                        obstacles: [{x: 3, type: 'fire'}, {x: 5, type: 'fire'}, {x: 7, type: 'fire'}],
+                        validate: (actions) => {
+                            let x = 1;
+                            let success = true;
+                            for (let a of actions) {
+                                if (a === "move_right") x++;
+                                else if (a === "jump") x++;
+                                if (a !== "jump" && (x === 3 || x === 5 || x === 7)) success = false;
+                            }
+                            return success && x === 7;
+                        }
+                    }
+                ],
+                quiz: [
+                    {
+                        question: "คีย์เวิร์ดใดในภาษา Python ที่ใช้สำหรับขึ้นต้นโครงสร้างเพื่อสั่งให้ทำงานซ้ำตามจำนวนรอบที่ระบุ?",
+                        choices: ["for", "repeat", "while_loop", "loop_count"],
+                        answerIndex: 0,
+                        explanation: "Python ใช้คำสั่ง 'for' (ร่วมกับฟังก์ชัน range) ในการเขียนโค้ดควบคุมโครงสร้างลูปซ้ำตามจำนวนรอบที่ต้องการแบบง่ายและชัดเจนที่สุด"
+                    },
+                    {
+                        question: "จากโค้ด `for i in range(3):` คำสั่งที่อยู่ด้านในลูปนี้จะทำงานทั้งหมดกี่รอบ?",
+                        choices: ["1 รอบ", "2 รอบ", "3 รอบ", "4 รอบ"],
+                        answerIndex: 2,
+                        explanation: "ฟังก์ชัน range(3) จะสร้างชุดตัวเลขจาก 0 ถึง 2 (ได้แก่ 0, 1, 2) ซึ่งหมายความว่าบล็อกคำสั่งจะทำงานวนซ้ำทั้งหมดครบ 3 รอบพอดิบพอดี"
+                    },
+                    {
+                        question: "ทำไมภาษา Python จึงบังคับให้ผู้เขียนโค้ดต้องทำการ 'ย่อหน้า' (Indentation) บรรทัดใต้คำสั่ง `for`?",
+                        choices: ["เพื่อให้โค้ดดูเป็นระเบียบสวยงามเท่านั้น", "เพื่อบอกระบบว่าคำสั่งใดบ้างที่อยู่ภายในการทำงานของลูป", "ช่วยเพิ่มประสิทธิภาพความเร็วในการทำงานของ CPU", "ช่วยป้องกันไม่ให้ไวรัสเข้ามาทำลายไฟล์โค้ด"],
+                        answerIndex: 1,
+                        explanation: "Python ใช้ระบบย่อหน้า (Indentation) แทนเครื่องหมายปีกกา เพื่อระบุอาณาเขตพื้นที่ทำงาน (Scope) ว่าโค้ดบรรทัดไหนบ้างที่ต้องวิ่งทำซ้ำอยู่ข้างในลูป"
+                    },
+                    {
+                        question: "โค้ดวนซ้ำชุดนี้จะทำงานอย่างไรบนแผนที่เกม?",
+                        code: "for i in range(2):\n    move_right()\n    jump()",
+                        choices: ["เดินขวา 2 ช่อง แล้วค่อยกระโดด 2 ครั้ง", "เดินขวาแล้วกระโดด โดยทำซ้ำแบบนี้ทั้งหมด 2 รอบ", "สไลม์จะหมุนตัวเดินกลับหลังซ้ำๆ", "เกิดข้อผิดพลาดรันโค้ดไม่ได้"],
+                        answerIndex: 1,
+                        explanation: "โค้ดเดินขวาและกระโดดย่อหน้าอยู่ข้างในลูปคู่กัน จึงวิ่งเป็นกลุ่มพฤติกรรม สไลม์จะเดินขวา->กระโดด (รอบที่ 1) และเดินขวา->กระโดด (รอบที่ 2)"
+                    },
+                    {
+                        question: "หากต้องการวนซ้ำเพื่อประมวลผลโค้ดทั้งหมด 5 ครั้ง ข้อใดคือคำสั่งลูปที่ถูกต้องที่สุด?",
+                        choices: ["for i in range(5)", "for i in range(5):", "for range(5):", "for i to 5:"],
+                        answerIndex: 1,
+                        explanation: "ไวยากรณ์ที่ถูกต้องในการเขียนลูป For ใน Python คือต้องระบุตัวแปร (เช่น i) คีย์เวิร์ด in, ฟังก์ชัน range(5) และต้องลงท้ายด้วยเครื่องหมายโคลอน (:) เสมอ"
+                    }
+                ]
+            },
+            4: {
+                title: "ด่านที่ 4: ทางแยกคุณมังกรหลับ (Conditions)",
+                tasks: [
+                    {
+                        subTitle: "ภารกิจที่ 1/5: มังกรหลับ ย่อแอบผ่าน",
+                        description: "ถ้ามังกรกำลังหลับ (`dragon_sleeping == True`) ให้แอบเดินขวา 2 ก้าวเพื่อไปเก็บผลเชอร์รี่ที่ช่อง 3",
+                        cheatSheet: ["if เงื่อนไข : ตรวจสอบตรวจสอบค่าเพื่อทำคำสั่งด้านในย่อหน้า"],
+                        defaultCode: "# ภารกิจที่ 1: พิมพ์คำสั่งตรวจสอบเงื่อนไขแบบ If\n# 1. เขียนหัวเงื่อนไข if dragon_sleeping == True:\n# 2. บรรทัดย่อหน้าใต้ลูป ให้พิมพ์สั่งเดินขวา 2 ช่อง\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 3, y: 3},
+                        obstacles: [{x: 3, type: 'dragon'}],
+                        validate: (actions, isSleeping) => {
+                            let x = 1;
+                            for (let a of actions) {
+                                if (a === "move_right") x++;
+                            }
+                            return x === 3 && (isSleeping ? true : false);
+                        }
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 2/5: มังกรตื่น ร่ายมนต์สงบศึก",
+                        description: "หากมังกรตื่น (เงื่อนไข If เป็นเท็จ) ให้วิ่งลงที่ `else:` แล้วสั่งร่ายคาถากล่อมหลับ `cast_spell('sleep')` ก่อนก้าวเดินผ่าน",
+                        cheatSheet: ["else: : ส่วนที่จะทำคำสั่งเมื่อเงื่อนไขหลัก If ตรวจสอบแล้วไม่เป็นจริง"],
+                        defaultCode: "# ภารกิจที่ 2:\n# 1. พิมพ์โครงสร้าง If-Else เช็คค่า dragon_sleeping == True\n# 2. ในส่วน else: ให้เรียกใช้ฟังก์ชัน cast_spell('sleep') แล้วเดิน move_right(2)\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 3, y: 3},
+                        obstacles: [{x: 3, type: 'dragon'}],
+                        validate: (actions, isSleeping) => {
+                            let x = 1;
+                            let casted = false;
+                            for (let a of actions) {
+                                if (a === "move_right") x++;
+                                else if (a === "cast_spell:sleep") casted = true;
+                            }
+                            return x === 3 && (isSleeping || casted);
+                        }
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 3/5: เช็คสถานะมังกรสมบูรณ์แบบ",
+                        description: "เขียนทางแยก If-Else ตรวจสอบสถานะมังกรขัดขวางที่ช่อง 3 หากมังกรหลับให้เดินข้าม แต่หากมังกรตื่นให้ร่ายมนต์ 'sleep' ก่อนเดิน 3 ก้าว",
+                        cheatSheet: ["if dragon_sleeping == True: : เช็คมังกรหลับ"],
+                        defaultCode: "# ภารกิจที่ 3: เดินหน้า 1 ช่อง แล้วตรวจสอบความตื่นหลับของมังกร\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 4, y: 3},
+                        obstacles: [{x: 3, type: 'dragon'}],
+                        validate: (actions, isSleeping) => {
+                            let x = 1;
+                            let casted = false;
+                            for (let a of actions) {
+                                if (a === "move_right") x++;
+                                else if (a === "cast_spell:sleep") casted = true;
+                            }
+                            return x === 4 && (isSleeping || casted);
+                        }
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 4/5: ตรวจค่าพลังทองคำ",
+                        description: "เรามีตัวแปรเก็บทอง `gold = 10` หากกระเป๋ามีทองน้อยกว่า 15 (`gold < 15`) ให้ขยับตัวไปเก็บเป้าหมายเชอร์รี่สีทองที่ช่อง 3",
+                        cheatSheet: ["if gold < 15: : ตรวจสอบเปรียบเทียบตัวเลขน้อยกว่า"],
+                        defaultCode: "# ภารกิจที่ 4:\n# 1. กำหนดตัวแปร gold ให้เก็บเลข 10\n# 2. พิมพ์ตรวจสอบเงื่อนไข If เช็ค gold < 15:\n# 3. สั่ง move_right(2) ไว้ในบรรทัดย่อหน้าด้านใน\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 3, y: 3},
+                        obstacles: [],
+                        validate: (actions) => actions.filter(a => a === "move_right").length === 2
+                    },
+                    {
+                        subTitle: "ภารกิจที่ 5/5: หอคอยหีบทองคำสูงสุด",
+                        description: "ปลายทางมีหีบสมบัติอยู่ที่ช่อง 6 ตรวจสอบสถานะมังกรที่ขวางช่อง 3 เดินไปจนถึงปลายทางแล้วใช้คำสั่งเปิดหีบ `open_chest()` เป็นคำสั่งสุดท้าย!",
+                        cheatSheet: ["open_chest() : เปิดหีบรางวัลรับชัยชนะ"],
+                        defaultCode: "# ภารกิจที่ 5: เดินหลบหลีกมังกร เดินหน้าต่อจนถึงช่อง 6 แล้วสั่ง open_chest() นอกย่อหน้าลูปหลัก\n",
+                        slimeStart: {x: 1, y: 3},
+                        target: {x: 6, y: 3},
+                        obstacles: [{x: 3, type: 'dragon'}],
+                        validate: (actions, isSleeping) => {
+                            let x = 1;
+                            let casted = false;
+                            let opened = false;
+                            for (let a of actions) {
+                                if (a === "move_right") x++;
+                                else if (a === "cast_spell:sleep") casted = true;
+                                else if (a === "open_chest" && x === 6) opened = true;
+                            }
+                            return x === 6 && (isSleeping || casted) && opened;
+                        }
+                    }
+                ],
+                quiz: [
+                    {
+                        question: "คีย์เวิร์ดใดในภาษา Python ที่ใช้ในการตรวจสอบเงื่อนไขเพื่อตัดสินใจเลือกทำงานบางคำสั่ง?",
+                        choices: ["switch", "if", "check", "maybe"],
+                        answerIndex: 1,
+                        explanation: "ใน Python และภาษาโปรแกรมส่วนใหญ่ เราใช้คีย์เวิร์ด 'if' ในการตรวจสอบกรณีเงื่อนไข เพื่อให้ระบบตัดสินใจว่าจะรันโค้ดบรรทัดด้านในหรือไม่"
+                    },
+                    {
+                        question: "สัญลักษณ์ใด in ภาษา Python ที่ใช้สำหรับเปรียบเทียบว่าข้อมูลสองตัวมีค่าเท่ากันหรือไม่?",
+                        choices: ["=", "==", "===", "equals"],
+                        answerIndex: 1,
+                        explanation: "การใช้เครื่องหมายเท่ากับตัวเดียว (=) จะใช้เพื่อกำหนดค่าให้กับตัวแปร แต่สำหรับการเปรียบเทียบความเท่ากันของค่าสองฝั่ง เราต้องใช้สัญลักษณ์เท่ากับสองตัว (==)"
+                    },
+                    {
+                        question: "หากตัวแปร `dragon_sleeping = False` โค้ดส่วนใดจะได้รับการรันหลังจากตรวจสอบเงื่อนไขนี้?",
+                        code: "if dragon_sleeping == True:\n    # บล็อก A\nelse:\n    # บล็อก B",
+                        choices: ["บล็อก A เท่านั้น", "บล็อก B เท่านั้น", "ทั้งบล็อก A และ B ร่วมกัน", "ไม่มีข้อใดทำงานเลย"],
+                        answerIndex: 1,
+                        explanation: "เนื่องจากเงื่อนไขของ if (False == True) ผลลัพธ์ประเมินออกมาเป็นเท็จ ระบบจะข้ามบล็อก A ไป และเลือกเดินทางไปประมวลผลคำสั่งในฝั่ง else (บล็อก B) ทันที"
+                    },
+                    {
+                        question: "คีย์เวิร์ด `else` ในโครงสร้างการเลือกแบบ `if-else` มีหน้าที่การทำงานอย่างไร?",
+                        choices: ["ประมวลผลโค้ดด้านในเมื่อเงื่อนไขของ if ตรวจสอบแล้วเป็นจริง", "ประมวลผลโค้ดด้านในเมื่อเงื่อนไขของ if ตรวจสอบแล้วเป็นเท็จ", "ใช้ในการสร้างลูปแบบไม่มีวันสิ้นสุด", "ใช้ลบตัวแปรออกจากระบบ"],
+                        answerIndex: 1,
+                        explanation: "คีย์เวิร์ด 'else' จะระบุทางแยกสำรองที่จะทำงานอัตโนมัติเฉพาะตอนที่เงื่อนไขของกลุ่ม 'if' หลักที่อยู่ด้านบนตรวจสอบแล้วไม่เป็นจริง (เป็นเท็จ)"
+                    },
+                    {
+                        question: "หากกำหนดค่าเริ่มต้นให้ตัวแปร `gold = 10` ตัวละครจะทำพฤติกรรมใดตามเงื่อนไขด้านล่างนี้?",
+                        code: "if gold > 15:\n    open_chest()\nelse:\n    move_right()",
+                        choices: ["open_chest()", "move_right()", "ทำทั้งสองอย่างพร้อมกัน", "เกิดข้อผิดพลาด Error"],
+                        answerIndex: 1,
+                        explanation: "เงื่อนไขตรวจสอบว่า gold > 15 หรือไม่ (10 มากกว่า 15 หรือไม่) ซึ่งผลลัพธ์เป็นเท็จ ระบบจึงเลือกไปทำงานหลังคำสั่ง else ซึ่งก็คือ move_right()"
+                    }
+                ]
+            }
+        };
+
+        // คัมภีร์ข้อมูลความรู้ก่อนขึ้นด่านถัดไป (Knowledge preview content)
+        const previews = {
+            2: {
+                title: "ตำราวิชาการ: ตัวแปร (Variables)",
+                html: `
+                    <p class="mb-2"><strong>ตัวแปร (Variables)</strong> คืออะไรกันนะ? ลองสมมติว่าในชีวิตประจำวันเวลาเราอยากเก็บของเล่น เราจะหา <strong>"กล่องกระดาษมาแปะป้ายระบุชื่อ"</strong> ไว้นั่นเองค่ะ!</p>
+                    <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-100 my-3 text-xs md:text-sm font-semibold text-purple-950 space-y-1">
+                        <div>ในทางภาษา Python เราเขียนสัญลักษณ์กำหนดค่ากล่องแบบนี้ค่ะ:</div>
+                        <div class="font-mono text-pink-600 bg-white p-2 rounded border border-purple-200 mt-1">steps = 3</div>
+                        <div class="mt-2 text-gray-500 font-normal">หมายความว่า: "สร้างกล่องสมบัติชื่อ steps แล้วหยิบเลข 3 ไปเก็บไว้ข้างในกล่องนะ"</div>
+                    </div>
+                    <p class="text-sm">เมื่อเราต้องการใช้งาน เช่น สั่งเดินขวาตามจำนวนก้าวที่บันทึกไว้ ก็เพียงแค่อ้างอิงชื่อกล่องโดยเขียน <code>move_right(steps)</code> ระบบคอมพิวเตอร์จะแอบเปิดกล่อง steps และขโมยดึงเลข 3 ออกมารันสั่งให้น้องสไลม์กระโดด 3 ครั้งพอดิบพอดีเลยค่ะ!</p>
+                    <p class="text-xs text-amber-600 font-bold mt-2"><i class="fa-solid fa-triangle-exclamation"></i> ข้อควรจำของเด็กดี: ตัวแปรกล่องของไพธอนห้ามพิมพ์ตัวเลขนำหน้า (เช่น 5steps ผิดกฎนะคะ!) และใส่ใจตัวพิมพ์เล็ก-ใหญ่อย่างมากเลยจ้า</p>
+                `
+            },
+            3: {
+                title: "ตำราวิชาการ: วงล้อลูป (Loops)",
+                html: `
+                    <p class="mb-2">ถ้าหากต้องการสั่งให้น้องสไลม์เดินทีละก้าว 100 ครั้งล่ะ? การพิมพ์ <code>move_right()</code> ร้อยบรรทัดคงเมื่อยมือและโค้ดรกมากแน่เลย! นักเขียนโค้ดจึงประดิษฐ์ <strong>"ลูปวนซ้ำ (Loops)"</strong> ขึ้นมาเพื่อสั่งเรื่องซ้ำ ๆ อย่างอัตโนมัติค่ะ</p>
+                    <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-100 my-3 text-xs md:text-sm font-semibold text-purple-950 space-y-1">
+                        <div>การใช้ For Loop สำหรับเขียนวนรอบในไพธอน:</div>
+                        <div class="font-mono text-pink-600 bg-white p-2 rounded border border-purple-200 mt-1">for i in range(3):<br>&nbsp;&nbsp;&nbsp;&nbsp;move_right()</div>
+                    </div>
+                    <p class="text-sm"><strong>กฎเหล็กยอดอัศวิน:</strong> <code>range(3)</code> หมายความว่าจะทำงานซ้ำ 3 รอบ และทุกคำสั่งที่จะให้ถูกจับวนลูปซ้ำ <u>จะต้องทำการเคาะเว้นวรรค (ย่อหน้า/Indentation)</u> เยื้องเข้ามาข้างในเสมอ หากไม่เยื้องย่อหน้า ระบบแปลภาษาจะงงและสับสนกลายเป็นเออร์เรอร์ทันทีเลยค่ะ!</p>
+                `
+            },
+            4: {
+                title: "ตำราวิชาการ: ทางเลือกตรรกะตัดสินใจ (Conditions)",
+                html: `
+                    <p class="mb-2">เวลาเจอทางแยกในชีวิตประจำวัน เช่น <em>"ถ้าฝนตก ให้พกร่ม แต่ถ้าฝนไม่ตก ก็เดินชิวๆ"</em> คอมพิวเตอร์ก็คิดและเลือกทำแบบนี้ได้เหมือนกันด้วยโครงสร้าง <strong>"การตรวจสอบเงื่อนไข (If-Else)"</strong> ค่ะ</p>
+                    <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-100 my-3 text-xs md:text-sm font-semibold text-purple-950 space-y-1">
+                        <div>ตัวอย่างไวยากรณ์ If-Else ในทางภาษา Python:</div>
+                        <div class="font-mono text-pink-600 bg-white p-2 rounded border border-purple-200 mt-1">if dragon_sleeping == True:<br>&nbsp;&nbsp;&nbsp;&nbsp;move_right(2)<br>else:<br>&nbsp;&nbsp;&nbsp;&nbsp;cast_spell('sleep')</div>
+                    </div>
+                    <p class="text-sm">หากประโยคหลังคำว่า <code>if</code> ตรวจเช็คแล้วเป็นจริง (มังกรหลับอยู่จริง) ตัวละครจะเลือกวิ่งเข้าไปรันคำสั่งที่เยื้องอยู่ข้างใน <code>if</code> ทันที แต่ถ้ามังกรตื่น (เงื่อนไขเป็นเท็จ) มันจะกระโดดข้ามไปทำในฝั่งสำรองของ <code>else</code> แทนค่ะ</p>
+                    <p class="text-xs text-emerald-600 font-bold mt-2"><i class="fa-solid fa-code"></i> สัญลักษณ์เปรียบเทียบในไพธอนจะใช้เครื่องหมายเท่ากับคู่กัน <code>==</code> เพื่อบอกความเท่ากันของค่าสองฝั่งเสมอนะคะ!</p>
+                `
+            }
+        };
+
+        // สถานะของแอปพลิเคชัน
+        let currentLevelIndex = 1;
+        let currentTaskIndex = 0; // 0 ถึง 4 (แทนภารกิจย่อย 1 ถึง 5)
+        let pyodideInstance = null;
+        let codeEditor = null;
+        let isPythonReady = false;
+        let activeTab = "coding"; // "coding" หรือ "quiz"
+        
+        // ข้อมูลบันทึกความคืบหน้าการปลดล็อก (Gatekeeper State)
+        const levelClearedTasks = {
+            1: [false, false, false, false, false],
+            2: [false, false, false, false, false],
+            3: [false, false, false, false, false],
+            4: [false, false, false, false, false]
+        };
+        const levelQuizPassed = { 1: false, 2: false, 3: false, 4: false };
+        const quizScores = { 1: 0, 2: 0, 3: 0, 4: 0 };
+        
+        let dragonSleepingState = true;
+        let pendingLevelTransition = null; // เก็บด่านพักเพื่อขึ้นสไลด์แนะนำ
+
+        // ตัวแปรควบคุมระบบแบบทดสอบประจำด่าน
+        let currentQuestionIndex = 0;
+        let currentQuizScore = 0;
+        let selectedChoiceIndex = null;
+        let hasAnsweredCurrentQuestion = false;
+
+        // สเตตจำลองสำหรับการแสดงแอนิเมชันของกราฟิก
+        let slimeAnim = {
+            gridX: 1,
+            gridY: 3,
+            pixelX: 0,
+            pixelY: 0,
+            targetPixelX: 0,
+            targetPixelY: 0,
+            bounceY: 0,
+            frame: 0,
+            isJumping: false,
+            isCasting: false,
+            spellAnimFrame: 0
+        };
+
+        let isAnimating = false;
+        let animationQueue = [];
+
+        // --------------------------------------------------------------
+        // 4. ตั้งค่าเริ่มต้นและเริ่มโหลดระบบ
+        // --------------------------------------------------------------
+        window.addEventListener('load', async () => {
+            const textEditorElement = document.getElementById('code-editor-area');
+            codeEditor = CodeMirror.fromTextArea(textEditorElement, {
+                lineNumbers: true,
+                mode: "python",
+                theme: "dracula",
+                indentUnit: 4,
+                tabSize: 4,
+                lineWrapping: true
+            });
+
+            loadLevel(1);
+
+            updateStatus("ระบบกำลังปลุกพลังเวทมนตร์ Python... โปรดรอสักครู่ (ใช้เวลาประมาณ 10-15 วินาทีในการรันครั้งแรก)", "info");
+            logToConsole("กำลังดึงข้อมูลล่ามแปลภาษา Python (Pyodide Wasm) จากระบบคลาวด์...");
+            
+            try {
+                pyodideInstance = await loadPyodide();
+                logToConsole("ระบบ Pyodide โหลดเสร็จสิ้นแล้ว!");
+                
+                await pyodideInstance.runPythonAsync(`
+_actions = []
+
+def move_right(steps=1):
+    for _ in range(steps):
+        _actions.append("move_right")
+
+def move_left(steps=1):
+    for _ in range(steps):
+        _actions.append("move_left")
+
+def jump():
+    _actions.append("jump")
+
+def cast_spell(spell_type):
+    _actions.append(f"cast_spell:{spell_type}")
+
+def open_chest():
+    _actions.append("open_chest")
+`);
+                isPythonReady = true;
+                updateStatus("พลังเวทมนตร์พร้อมร่ายแล้ว! น้องสไลม์พร้อมเดินทางแล้วค่ะ 💚", "success");
+                logToConsole("เอนจินเกมพร้อมรับคำสั่งจากผู้เรียนเรียบร้อย.");
+            } catch (error) {
+                updateStatus("เกิดข้อผิดพลาดในการรันล่ามแปลงคำสั่ง กรุณารีเฟรชเพื่อลองใหม่อีกครั้ง", "error");
+                logToConsole("Error loading compiler: " + error.message);
+            }
+        });
+
+        // --------------------------------------------------------------
+        // 5. ระบบตรวจสอบการปลดล็อกด่าน (Gatekeeper Checking)
+        // --------------------------------------------------------------
+        function startGame() {
+            document.getElementById('welcome-screen').classList.add('hidden');
+        }
+
+        function canAccessLevel(levelNum) {
+            if (levelNum === 1) return true;
+            
+            // การเข้าถึงด่าน N แปลว่าด่าน N-1 จะต้องเคลียร์ 5 ภารกิจย่อย และสอบผ่านควิซ (คะแนน >= 4)
+            let prevLevel = levelNum - 1;
+            let tasksCleared = levelClearedTasks[prevLevel] && levelClearedTasks[prevLevel].every(t => t === true);
+            let quizPassed = levelQuizPassed[prevLevel];
+            
+            return tasksCleared && quizPassed;
+        }
+
+        function showLockModal(levelNum) {
+            showOverlay(
+                "🔒 ประตูมนตร์ยังล็อกอยู่จ้า!",
+                `คุณครูสไลม์แจ้งเตือน: หนูๆ จะต้องผ่าน "ภารกิจเขียนโค้ดครบทั้ง 5 ข้อ" และ "สอบแบบทดสอบตรรกะให้ได้คะแนน 4/5 คะแนนขึ้นไป" ของด่านปัจจุบันก่อน ถึงจะเดินทางไปด่านที่ ${levelNum} ได้นะจ๊ะ!`,
+                "rose",
+                () => { hideOverlay(); },
+                "กลับไปทำภารกิจต่อ"
+            );
+        }
+
+        // --------------------------------------------------------------
+        // 6. ฟังก์ชันการแสดงหน้าความรู้ก่อนด่านถัดไป (Knowledge Hub Slide)
+        // --------------------------------------------------------------
+        function showKnowledgeHubForLevel(levelNum) {
+            const previewData = previews[levelNum];
+            if (!previewData) {
+                loadLevel(levelNum);
+                return;
+            }
+
+            pendingLevelTransition = levelNum;
+            document.getElementById('knowledge-title').innerText = previewData.title;
+            document.getElementById('knowledge-body').innerHTML = previewData.html;
+            document.getElementById('knowledge-hub').classList.remove('hidden');
+        }
+
+        function closeKnowledgeHubAndStart() {
+            document.getElementById('knowledge-hub').classList.add('hidden');
+            if (pendingLevelTransition) {
+                loadLevel(pendingLevelTransition);
+                pendingLevelTransition = null;
+            }
+        }
+
+        // --------------------------------------------------------------
+        // 7. ฟังก์ชันการโหลดด่านและภารกิจย่อย
+        // --------------------------------------------------------------
+        function loadLevel(levelNum) {
+            currentLevelIndex = levelNum;
+            currentTaskIndex = 0; // รีเซ็ตมาเริ่มที่ภารกิจย่อย 1 เสมอ
+            
+            // ปรับแต่งสถานะปุ่มด่าน
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById(`btn-lv${i}`);
+                if (btn) {
+                    if (i === levelNum) {
+                        btn.className = "px-3 py-2 rounded-xl text-xs md:text-sm font-bold bg-[#88D9BC] text-[#1F2E3D] transition-all";
+                    } else {
+                        btn.className = "px-3 py-2 rounded-xl text-xs md:text-sm font-bold bg-[#34495e] text-white hover:bg-gray-700 transition-all";
+                    }
+                }
+            }
+
+            loadTask(0);
+            resetLevelQuiz();
+            hideOverlay();
+
+            if (isPythonReady) {
+                updateStatus(`เข้าสู่ด่านที่ ${levelNum} แล้ว มาลุยข้อแรกกัน!`, "info");
+            }
+        }
+
+        function loadTask(taskIndex) {
+            currentTaskIndex = taskIndex;
+            const lvData = levels[currentLevelIndex];
+            const taskData = lvData.tasks[taskIndex];
+
+            // อัปเดตข้อมูล UI ข้อคำอธิบาย
+            document.getElementById('level-title').innerText = taskData.subTitle;
+            document.getElementById('level-desc').innerText = taskData.description;
+            document.getElementById('task-progress-text').innerText = `ภารกิจย่อยที่ ${taskIndex + 1} / 5`;
+
+            // อัปเดต Cheat Sheet
+            const listContainer = document.getElementById('instructions-list');
+            listContainer.innerHTML = '';
+            taskData.cheatSheet.forEach(item => {
+                const li = document.createElement('li');
+                li.innerText = item;
+                listContainer.appendChild(li);
+            });
+
+            // อัปเดตโค้ดใน Editor
+            codeEditor.setValue(taskData.defaultCode);
+
+            // จำลองด่านที่ 4
+            if (currentLevelIndex === 4) {
+                dragonSleepingState = (taskIndex % 2 === 0); // สลับตื่นหลับตามโจทย์ย่อย
+                logToConsole(`จำลองเงื่อนไขด่านย่อย: คุณมังกรกำลัง [${dragonSleepingState ? 'นอนหลับปุ๋ย' : 'ตื่นขึ้นพร้อมป้องกัน'}]`);
+            }
+
+            updateTaskProgressUI();
+            resetCharacterState();
+        }
+
+        function changeLevel(levelNum) {
+            if (isAnimating) return;
+            if (!canAccessLevel(levelNum)) {
+                showLockModal(levelNum);
+                return;
+            }
+            
+            // ก่อนจะโหลด Level 2, 3, 4 ให้ขึ้นสไลด์เตรียมความรู้ก่อน
+            if (levelNum > 1 && !levelClearedTasks[levelNum].some(t => t === true)) {
+                showKnowledgeHubForLevel(levelNum);
+            } else {
+                loadLevel(levelNum);
+            }
+            switchTab('coding');
+        }
+
+        function resetCurrentTask() {
+            if (isAnimating) return;
+            loadTask(currentTaskIndex);
+            logToConsole(`รีเซ็ตภารกิจย่อยที่ ${currentTaskIndex + 1}`);
+        }
+
+        function updateTaskProgressUI() {
+            const container = document.getElementById('task-indicators');
+            container.innerHTML = '';
+            const clearedList = levelClearedTasks[currentLevelIndex];
+
+            clearedList.forEach((isCleared, idx) => {
+                const dot = document.createElement('span');
+                if (idx === currentTaskIndex) {
+                    dot.className = "w-3 h-3 rounded-full bg-[#ff9f89] border-2 border-white animate-ping";
+                } else if (isCleared) {
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                } else {
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-gray-300";
+                }
+                container.appendChild(dot);
+            });
+        }
+
+        function resetCharacterState() {
+            const lvData = levels[currentLevelIndex];
+            const taskData = lvData.tasks[currentTaskIndex];
+            slimeAnim.gridX = taskData.slimeStart.x;
+            slimeAnim.gridY = taskData.slimeStart.y;
+            
+            slimeAnim.pixelX = slimeAnim.gridX * 75 + 37.5;
+            slimeAnim.pixelY = slimeAnim.gridY * 70 + 40;
+            slimeAnim.targetPixelX = slimeAnim.pixelX;
+            slimeAnim.targetPixelY = slimeAnim.pixelY;
+            slimeAnim.bounceY = 0;
+            slimeAnim.isJumping = false;
+            slimeAnim.isCasting = false;
+            slimeAnim.spellAnimFrame = 0;
+            
+            animationQueue = [];
+            isAnimating = false;
+            
+            drawGameScene();
+        }
+
+        // --------------------------------------------------------------
+        // 8. ระบบสลับหน้าจอ (Tab Switch Logic)
+        // --------------------------------------------------------------
+        function switchTab(tabName) {
+            if (isAnimating) return;
+            activeTab = tabName;
+            
+            const btnCoding = document.getElementById('tab-coding');
+            const btnQuiz = document.getElementById('tab-quiz');
+            const containerCoding = document.getElementById('coding-view-container');
+            const containerQuiz = document.getElementById('quiz-view-container');
+
+            if (tabName === 'coding') {
+                btnCoding.className = "flex-1 py-3 font-bold text-xs md:text-sm text-center bg-white border-r-2 border-[#e3ded5] text-[#2c3e50] flex items-center justify-center gap-2 transition-all";
+                btnQuiz.className = "flex-1 py-3 font-bold text-xs md:text-sm text-center text-gray-500 hover:text-gray-800 flex items-center justify-center gap-2 transition-all";
+                containerCoding.classList.remove('hidden');
+                containerQuiz.classList.add('hidden');
+            } else {
+                btnQuiz.className = "flex-1 py-3 font-bold text-xs md:text-sm text-center bg-white border-l-2 border-[#e3ded5] text-[#2c3e50] flex items-center justify-center gap-2 transition-all";
+                btnCoding.className = "flex-1 py-3 font-bold text-xs md:text-sm text-center text-gray-500 hover:text-gray-800 flex items-center justify-center gap-2 transition-all";
+                containerCoding.classList.add('hidden');
+                containerQuiz.classList.remove('hidden');
+                renderQuizQuestion();
+            }
+        }
+
+        // --------------------------------------------------------------
+        // 9. ระบบแบบทดสอบรายสเต็ป (Quiz Engine Core)
+        // --------------------------------------------------------------
+        function resetLevelQuiz() {
+            currentQuestionIndex = 0;
+            currentQuizScore = 0;
+            selectedChoiceIndex = null;
+            hasAnsweredCurrentQuestion = false;
+            
+            document.getElementById('quiz-tab-badge').innerText = `${quizScores[currentLevelIndex]}/5`;
+            
+            const feedbackBox = document.getElementById('quiz-feedback-box');
+            if (feedbackBox) feedbackBox.classList.add('hidden');
+        }
+
+        function renderQuizQuestion() {
+            const lvData = levels[currentLevelIndex];
+            const questionData = lvData.quiz[currentQuestionIndex];
+
+            document.getElementById('quiz-progress-text-display').innerText = `คำถามข้อที่ ${currentQuestionIndex + 1} / 5`;
+            document.getElementById('quiz-score-text').innerHTML = `<i class="fa-solid fa-star text-amber-500"></i> ถูกแล้ว: ${currentQuizScore}/5 ข้อ (เกณฑ์ผ่าน: 4/5)`;
+            
+            const progressPercent = (currentQuestionIndex / 5) * 100;
+            document.getElementById('quiz-progress-bar').style.width = `${progressPercent || 8}%`;
+
+            document.getElementById('quiz-question-title').innerText = questionData.question;
+
+            const codeBlock = document.getElementById('quiz-code-block');
+            if (questionData.code) {
+                codeBlock.innerText = questionData.code;
+                codeBlock.classList.remove('hidden');
+            } else {
+                codeBlock.classList.add('hidden');
+            }
+
+            selectedChoiceIndex = null;
+            hasAnsweredCurrentQuestion = false;
+            document.getElementById('quiz-feedback-box').classList.add('hidden');
+
+            const actionBtn = document.getElementById('quiz-action-btn');
+            actionBtn.innerHTML = `<span>ยืนยันคำตอบ</span> <i class="fa-solid fa-arrow-right"></i>`;
+            actionBtn.className = "w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-md";
+
+            const choicesContainer = document.getElementById('quiz-choices-container');
+            choicesContainer.innerHTML = '';
+
+            questionData.choices.forEach((choiceText, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-3 rounded-xl border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-left text-xs md:text-sm font-semibold text-gray-700 transition-all flex items-center gap-3";
+                btn.id = `choice-${idx}`;
+                btn.onclick = () => selectQuizChoice(idx);
+
+                const circleLabel = document.createElement('span');
+                circleLabel.className = "w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 font-bold text-xs border border-gray-200";
+                circleLabel.innerText = String.fromCharCode(65 + idx);
+                circleLabel.id = `choice-badge-${idx}`;
+
+                const textSpan = document.createElement('span');
+                textSpan.innerText = choiceText;
+
+                btn.appendChild(circleLabel);
+                btn.appendChild(textSpan);
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        function selectQuizChoice(choiceIndex) {
+            if (hasAnsweredCurrentQuestion) return;
+
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`choice-${i}`);
+                const badge = document.getElementById(`choice-badge-${i}`);
+                if (btn) {
+                    btn.className = "w-full p-3 rounded-xl border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-left text-xs md:text-sm font-semibold text-gray-700 transition-all flex items-center gap-3";
+                    badge.className = "w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 font-bold text-xs border border-gray-200";
+                }
+            }
+
+            selectedChoiceIndex = choiceIndex;
+            const activeBtn = document.getElementById(`choice-${choiceIndex}`);
+            const activeBadge = document.getElementById(`choice-badge-${choiceIndex}`);
+            if (activeBtn) {
+                activeBtn.className = "w-full p-3 rounded-xl border-2 border-purple-500 bg-purple-50 text-left text-xs md:text-sm font-bold text-purple-900 transition-all flex items-center gap-3";
+                activeBadge.className = "w-6 h-6 flex items-center justify-center rounded-full bg-purple-500 text-white font-bold text-xs";
+            }
+        }
+
+        function handleQuizAction() {
+            const lvData = levels[currentLevelIndex];
+            const questionData = lvData.quiz[currentQuestionIndex];
+
+            if (!hasAnsweredCurrentQuestion) {
+                if (selectedChoiceIndex === null) {
+                    const choicesContainer = document.getElementById('quiz-choices-container');
+                    choicesContainer.classList.add('animate-shake');
+                    setTimeout(() => choicesContainer.classList.remove('animate-shake'), 400);
+                    updateStatus("กรุณาเลือกชอยส์คำตอบก่อนนะคะ 💖", "info");
+                    return;
+                }
+
+                hasAnsweredCurrentQuestion = true;
+                const isCorrect = (selectedChoiceIndex === questionData.answerIndex);
+
+                const feedbackBox = document.getElementById('quiz-feedback-box');
+                const feedbackIcon = document.getElementById('quiz-feedback-icon');
+                const feedbackTitle = document.getElementById('quiz-feedback-title');
+                const feedbackDesc = document.getElementById('quiz-feedback-desc');
+                
+                feedbackBox.classList.remove('hidden');
+
+                if (isCorrect) {
+                    currentQuizScore++;
+                    feedbackBox.className = "p-3 rounded-xl border-2 bg-emerald-50 border-emerald-200 flex items-start gap-3 text-xs mb-3";
+                    feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i>`;
+                    feedbackTitle.innerText = "ถูกต้องยอดเยี่ยม!";
+                    feedbackTitle.className = "font-bold text-emerald-800 mb-0.5";
+                    
+                    const correctBtn = document.getElementById(`choice-${selectedChoiceIndex}`);
+                    if (correctBtn) correctBtn.className = "w-full p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-left text-xs md:text-sm font-bold text-emerald-900 transition-all flex items-center gap-3";
+                } else {
+                    feedbackBox.className = "p-3 rounded-xl border-2 bg-rose-50 border-rose-200 flex items-start gap-3 text-xs mb-3 animate-shake";
+                    feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-500"></i>`;
+                    feedbackTitle.innerText = "คำตอบข้อนี้ยังไม่ใช่นะคะ";
+                    feedbackTitle.className = "font-bold text-rose-800 mb-0.5";
+
+                    const wrongBtn = document.getElementById(`choice-${selectedChoiceIndex}`);
+                    if (wrongBtn) wrongBtn.className = "w-full p-3 rounded-xl border-2 border-rose-300 bg-rose-50 text-left text-xs md:text-sm text-rose-700 transition-all flex items-center gap-3";
+                    
+                    const correctBtn = document.getElementById(`choice-${questionData.answerIndex}`);
+                    if (correctBtn) correctBtn.className = "w-full p-3 rounded-xl border-2 border-emerald-200 bg-emerald-50/50 text-left text-xs md:text-sm font-semibold text-emerald-800 transition-all flex items-center gap-3";
+                }
+
+                feedbackDesc.innerText = questionData.explanation;
+
+                const actionBtn = document.getElementById('quiz-action-btn');
+                if (currentQuestionIndex < 4) {
+                    actionBtn.innerHTML = `<span>คำถามข้อถัดไป</span> <i class="fa-solid fa-arrow-right"></i>`;
+                } else {
+                    actionBtn.innerHTML = `<span>สรุปคะแนนแบบทดสอบ</span> <i class="fa-solid fa-square-poll-vertical"></i>`;
+                }
+                actionBtn.className = "w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-md";
+                
+                document.getElementById('quiz-tab-badge').innerText = `${currentQuizScore}/5`;
+
+            } else {
+                if (currentQuestionIndex < 4) {
+                    currentQuestionIndex++;
+                    renderQuizQuestion();
+                } else {
+                    document.getElementById('quiz-progress-bar').style.width = `100%`;
+                    quizScores[currentLevelIndex] = currentQuizScore;
+
+                    let messageTitle = "";
+                    let messageDesc = "";
+                    let themeColor = "emerald";
+                    let isPassed = (currentQuizScore >= 4);
+
+                    if (isPassed) {
+                        levelQuizPassed[currentLevelIndex] = true;
+                        messageTitle = "🏆 ผ่านการทดสอบเกณฑ์สำเร็จ!";
+                        messageDesc = `สุดยอดเลยค่ะ! คุณผ่านควิซวิเคราะห์ตรรกะได้คะแนน ${currentQuizScore}/5 คะแนน สอบผ่านเกณฑ์สำเร็จ!`;
+                        themeColor = "emerald";
+                    } else {
+                        levelQuizPassed[currentLevelIndex] = false;
+                        messageTitle = "👾 ยังไม่ผ่านเกณฑ์ทดสอบ...";
+                        messageDesc = `คุณทำคะแนนได้ ${currentQuizScore}/5 ข้อ ซึ่งยังไม่ถึงเกณฑ์ผ่าน (4/5 ข้อ) ลองรีเซ็ตประเมินและทบทวนใหม่อีกสักรอบนะจ๊ะ คนเก่งทำได้อยู่แล้ว!`;
+                        themeColor = "rose";
+                    }
+
+                    showOverlay(
+                        messageTitle,
+                        messageDesc,
+                        themeColor,
+                        () => {
+                            hideOverlay();
+                            switchTab('coding');
+                            
+                            // เช็คเพื่อปลดล็อกด่านถัดไป
+                            let tasksCleared = levelClearedTasks[currentLevelIndex].every(t => t === true);
+                            if (tasksCleared && levelQuizPassed[currentLevelIndex]) {
+                                if (currentLevelIndex < 4) {
+                                    showOverlay(
+                                        "🎉 ปลดล็อกด่านถัดไปแล้ว!",
+                                        `ยินดีด้วยอย่างยิ่ง! น้องๆ ผ่านเงื่อนไขภารกิจและทำควิซด่านที่ ${currentLevelIndex} สำเร็จทั้งหมดแล้ว ประตูด่านถัดไปเปิดพร้อมให้เดินทางแล้วค่ะ!`,
+                                        "emerald",
+                                        () => {
+                                            hideOverlay();
+                                            changeLevel(currentLevelIndex + 1);
+                                        },
+                                        "เดินทางเข้าสู่ด่านถัดไป 🚀"
+                                    );
+                                } else {
+                                    showOverlay(
+                                        "🏆 ยอดวีรบุรุษผู้พิชิตโลก Python!",
+                                        "น้องๆ ได้ผ่านด่านภารกิจและแบบทดสอบวิเคราะห์ตรรกะครบถ้วนทั้งหมด 100% แล้ว เก่งกาจและมีความพร้อมสู่การเขียนโค้ดมืออาชีพเต็มตัวแล้วค่ะ!",
+                                        "emerald",
+                                        () => { hideOverlay(); },
+                                        "กลับสู่หน้าจอหลัก"
+                                    );
+                                }
+                            }
+                            resetLevelQuiz();
+                        },
+                        isPassed ? "กลับสู่โหมดภารกิจ" : "พยายามตอบควิซใหม่อีกครั้ง"
+                    );
+                }
+            }
+        }
+
+        // --------------------------------------------------------------
+        // 10. เอนจินรันคำสั่งภาษา Python ประมวลผลลัพธ์ผ่าน Pyodide
+        // --------------------------------------------------------------
+        async function executePlayerCode() {
+            if (!isPythonReady) {
+                updateStatus("กรุณารอสักครู่ ระบบกำลังปลุกชีพพจนานุกรม Python อยู่ค่ะ...", "info");
+                return;
+            }
+            if (isAnimating) return; 
+
+            updateStatus("กำลังแปลภาษาและเตรียมความพร้อมให้น้องสไลม์...", "info");
+            logToConsole("----------------------------------------");
+            logToConsole(`> เริ่มรันโค้ดภารกิจย่อยที่ ${currentTaskIndex + 1}/5...`);
+
+            const userCode = codeEditor.getValue();
+
+            try {
+                await pyodideInstance.runPythonAsync(`_actions.clear()`);
+
+                if (currentLevelIndex === 4) {
+                    await pyodideInstance.runPythonAsync(`dragon_sleeping = ${dragonSleepingState ? 'True' : 'False'}`);
+                }
+
+                await pyodideInstance.runPythonAsync(userCode);
+
+                let actionsProxy = pyodideInstance.globals.get('_actions');
+                let actions = actionsProxy.toJs();
+
+                logToConsole("ผลลัพธ์คำสั่งที่สร้างได้: [" + actions.join(", ") + "]");
+
+                if (actions.length === 0) {
+                    updateStatus("น้องสไลม์ยังยืนนิ่งอยู่เลย! ลองพิมพ์คำสั่งตามที่โจทย์แนะนำดูนะ", "error");
+                    return;
+                }
+
+                prepareAnimations(actions);
+
+            } catch (err) {
+                let friendlyError = "เกิดความคลาดเคลื่อนในการร่ายเวทย์! ";
+                if (err.message.includes("NameError")) {
+                    friendlyError += "มีสะกดคำผิดหรือพิมพ์ชื่อตัวแปรผิดพลาด ตรวจสอบตัวสะกดดูอีกทีสิคะ";
+                } else if (err.message.includes("IndentationError")) {
+                    friendlyError += "การเคาะช่องว่าง (ย่อหน้า/Indent) ใต้ลูป For หรือ If ไม่ถูกต้อง ลองเช็คบรรทัดเยื้องดูนะ";
+                } else if (err.message.includes("SyntaxError")) {
+                    friendlyError += "ไวยากรณ์ผิดพลาด มีจุดขาด ตกหล่น หรือวงเล็บปิดไม่ครบถ้วน ลองดูโค้ดดีๆ นะคะ";
+                } else {
+                    friendlyError += err.message;
+                }
+                
+                updateStatus(friendlyError, "error");
+                logToConsole(`[ERROR] ${err.message}`);
+            }
+        }
+
+        // --------------------------------------------------------------
+        // 11. จัดการคิวและประเมินแอนิเมชัน
+        // --------------------------------------------------------------
+        function prepareAnimations(actions) {
+            animationQueue = [];
+            const taskData = levels[currentLevelIndex].tasks[currentTaskIndex];
+            let virtualX = taskData.slimeStart.x;
+            let virtualY = taskData.slimeStart.y;
+            
+            actions.forEach(act => {
+                if (act === "move_right") {
+                    virtualX++;
+                    animationQueue.push({
+                        type: "move_right",
+                        startX: (virtualX - 1) * 75 + 37.5,
+                        targetX: virtualX * 75 + 37.5,
+                        startY: virtualY * 70 + 40,
+                        targetY: virtualY * 70 + 40
+                    });
+                } else if (act === "jump") {
+                    virtualX++; 
+                    animationQueue.push({
+                        type: "jump",
+                        startX: (virtualX - 1) * 75 + 37.5,
+                        targetX: virtualX * 75 + 37.5,
+                        startY: virtualY * 70 + 40,
+                        targetY: virtualY * 70 + 40
+                    });
+                } else if (act.startsWith("cast_spell")) {
+                    animationQueue.push({
+                        type: "cast_spell",
+                        spellType: act.split(":")[1]
+                    });
+                } else if (act === "open_chest") {
+                    animationQueue.push({
+                        type: "open_chest"
+                    });
+                }
+            });
+
+            let isLevelCleared = false;
+            if (currentLevelIndex === 4) {
+                isLevelCleared = taskData.validate(actions, dragonSleepingState);
+            } else {
+                isLevelCleared = taskData.validate(actions);
+            }
+
+            isAnimating = true;
+            processNextAnimationInQueue(isLevelCleared);
+        }
+
+        function processNextAnimationInQueue(isFinalClear) {
+            if (animationQueue.length === 0) {
+                isAnimating = false;
+                evaluateFinalResult(isFinalClear);
+                return;
+            }
+
+            const currentAnim = animationQueue.shift();
+            
+            if (currentAnim.type === "move_right") {
+                animateMovement(currentAnim, 30, () => {
+                    processNextAnimationInQueue(isFinalClear);
+                });
+            } else if (currentAnim.type === "jump") {
+                animateJump(currentAnim, 30, () => {
+                    processNextAnimationInQueue(isFinalClear);
+                });
+            } else if (currentAnim.type === "cast_spell") {
+                animateSpell(currentAnim, () => {
+                    processNextAnimationInQueue(isFinalClear);
+                });
+            } else if (currentAnim.type === "open_chest") {
+                animateOpenChest(() => {
+                    processNextAnimationInQueue(isFinalClear);
+                });
+            }
+        }
+
+        function animateMovement(anim, duration, callback) {
+            let currentFrame = 0;
+            function step() {
+                currentFrame++;
+                const progress = currentFrame / duration;
+                slimeAnim.pixelX = anim.startX + (anim.targetX - anim.startX) * progress;
+                slimeAnim.bounceY = -Math.abs(Math.sin(progress * Math.PI)) * 15;
+                drawGameScene();
+
+                if (currentFrame < duration) {
+                    requestAnimationFrame(step);
+                } else {
+                    slimeAnim.pixelX = anim.targetX;
+                    slimeAnim.bounceY = 0;
+                    slimeAnim.gridX = Math.round((slimeAnim.pixelX - 37.5) / 75);
+                    drawGameScene();
+                    callback();
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function animateJump(anim, duration, callback) {
+            let currentFrame = 0;
+            slimeAnim.isJumping = true;
+            function step() {
+                currentFrame++;
+                const progress = currentFrame / duration;
+                slimeAnim.pixelX = anim.startX + (anim.targetX - anim.startX) * progress;
+                slimeAnim.bounceY = -Math.sin(progress * Math.PI) * 45;
+                drawGameScene();
+
+                if (currentFrame < duration) {
+                    requestAnimationFrame(step);
+                } else {
+                    slimeAnim.pixelX = anim.targetX;
+                    slimeAnim.bounceY = 0;
+                    slimeAnim.isJumping = false;
+                    slimeAnim.gridX = Math.round((slimeAnim.pixelX - 37.5) / 75);
+                    drawGameScene();
+                    callback();
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function animateSpell(anim, callback) {
+            slimeAnim.isCasting = true;
+            slimeAnim.spellAnimFrame = 0;
+            let frameCount = 0;
+            function step() {
+                frameCount++;
+                slimeAnim.spellAnimFrame = frameCount;
+                drawGameScene();
+
+                if (frameCount < 40) {
+                    requestAnimationFrame(step);
+                } else {
+                    slimeAnim.isCasting = false;
+                    if (anim.spellType === "sleep") {
+                        dragonSleepingState = true;
+                    }
+                    drawGameScene();
+                    callback();
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function animateOpenChest(callback) {
+            setTimeout(() => {
+                drawGameScene();
+                callback();
+            }, 600);
+        }
+
+        // --------------------------------------------------------------
+        // 12. ประเมินผลด่านย่อยและล็อกปลดล็อก
+        // --------------------------------------------------------------
+        function evaluateFinalResult(isFinalClear) {
+            if (isFinalClear) {
+                // บันทึกความคืบหน้าด่านย่อย
+                levelClearedTasks[currentLevelIndex][currentTaskIndex] = true;
+                updateTaskProgressUI();
+
+                let nextActionCallback = () => {
+                    hideOverlay();
+                    if (currentTaskIndex < 4) {
+                        loadTask(currentTaskIndex + 1);
+                    } else {
+                        // ผ่านครบ 5 ข้อย่อยแล้ว ตรวจเช็คแบบทดสอบ
+                        if (levelQuizPassed[currentLevelIndex]) {
+                            showOverlay(
+                                "🎉 ปลดล็อกด่านถัดไปเรียบร้อย!",
+                                "เก่งที่สุดเลยจ้า! ผ่านเควสย่อยครบ 5 ข้อ และควิซผ่านเกณฑ์แล้ว ด่านต่อไปพร้อมรับผู้กล้าแล้วค่ะ!",
+                                "emerald",
+                                () => {
+                                    hideOverlay();
+                                    if (currentLevelIndex < 4) changeLevel(currentLevelIndex + 1);
+                                },
+                                "ลุยด่านใหม่กันเลย 🚀"
+                            );
+                        } else {
+                            showOverlay(
+                                "🌟 ผ่านภารกิจเขียนโค้ดครบแล้ว!",
+                                "สุดยอดเลยคนเก่ง! ผ่านภารกิจเขียนโค้ดครบทั้ง 5 แบบแล้วจ้า! ต่อไปกรุณาไปพิชิตแบบทดสอบ (Logic Quiz) ในแถบด้านบนให้ได้อย่างน้อย 4/5 คะแนน เพื่อปลดล็อกด่านถัดไปนะคะ!",
+                                "emerald",
+                                () => {
+                                    hideOverlay();
+                                    switchTab('quiz');
+                                },
+                                "ไปลุยแบบทดสอบวิเคราะห์ตรรกะ"
+                            );
+                        }
+                    }
+                };
+
+                updateStatus("ภารกิจสำเร็จลุล่วงแล้ว! ชัยชนะเป็นของคุณ 🏆", "success");
+                showOverlay(
+                    "🎉 สำเร็จภารกิจย่อย!",
+                    `น้องๆ เขียนโค้ดผ่านภารกิจที่ ${currentTaskIndex + 1}/5 ของด่านนี้แล้วจ้า เก่งมากๆ เลย!`,
+                    "emerald",
+                    nextActionCallback,
+                    currentTaskIndex === 4 ? "ตรวจสอบขั้นตอนถัดไป" : "ลุยด่านย่อยถัดไปเลย!"
+                );
+            } else {
+                updateStatus("โอ๊ะ! น้องสไลม์ยังไม่ผ่านด่านนี้ ลองแก้โค้ดและลุยใหม่อีกทีนะ", "error");
+                showOverlay(
+                    "👾 ยังไม่สำเร็จนะจ๊ะ...",
+                    `ดูเหมือนคำสั่งการขยับจะสั้นไป ยาวไป หรือโดนอุปสรรคขัดขวางเสียก่อน ลองตรวจสอบโค้ดและทดสอบรันใหม่อีกสักรอบนะคะคนเก่ง!`,
+                    "rose",
+                    () => {
+                        hideOverlay();
+                        resetCharacterState();
+                    },
+                    "พยายามใหม่อีกครั้ง!"
+                );
+            }
+        }
+
+        // --------------------------------------------------------------
+        // 13. ดรอว์อิงเอนจินวาดภาพ Canvas 2D
+        // --------------------------------------------------------------
+        function drawGameScene() {
+            const canvas = document.getElementById('stage-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#EBF8F4";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const cols = 8;
+            const rows = 5;
+            const cellW = 75;
+            const cellH = 70;
+
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    ctx.strokeStyle = "rgba(136, 217, 188, 0.25)";
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(c * cellW, r * cellH, cellW, cellH);
+                }
+            }
+
+            ctx.fillStyle = "#E5DFD4";
+            ctx.fillRect(0, 4 * cellH, canvas.width, cellH);
+            ctx.fillStyle = "#A7C49E"; 
+            ctx.fillRect(0, 4 * cellH, canvas.width, 10);
+
+            const taskData = levels[currentLevelIndex].tasks[currentTaskIndex];
+            
+            taskData.obstacles.forEach(obs => {
+                const obsXPixel = obs.x * cellW + cellW / 2;
+                const obsYPixel = 3 * cellH + 45;
+
+                if (obs.type === 'fire') {
+                    ctx.beginPath();
+                    ctx.arc(obsXPixel, obsYPixel + 10, 15, 0, 2 * Math.PI);
+                    ctx.fillStyle = "#FFB085"; 
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.moveTo(obsXPixel - 12, obsYPixel + 12);
+                    ctx.quadraticCurveTo(obsXPixel - 5, obsYPixel - 10, obsXPixel, obsYPixel - 22);
+                    ctx.quadraticCurveTo(obsXPixel + 5, obsYPixel - 10, obsXPixel + 12, obsYPixel + 12);
+                    ctx.closePath();
+                    ctx.fillStyle = "#FF6B6B";
+                    ctx.fill();
+                } else if (obs.type === 'dragon') {
+                    ctx.beginPath();
+                    ctx.arc(obsXPixel, obsYPixel - 15, 24, 0, 2 * Math.PI);
+                    ctx.fillStyle = dragonSleepingState ? "#A394F2" : "#E58D79"; 
+                    ctx.fill();
+
+                    if (dragonSleepingState) {
+                        ctx.strokeStyle = "#4A5560";
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(obsXPixel + 5, obsYPixel - 15, 5, 0, Math.PI, false);
+                        ctx.stroke();
+                        ctx.fillStyle = "#1F2E3D";
+                        ctx.font = "bold 16px Sarabun";
+                        ctx.fillText("Zzz..", obsXPixel + 15, obsYPixel - 35);
+                    } else {
+                        ctx.fillStyle = "#1F2E3D";
+                        ctx.beginPath();
+                        ctx.arc(obsXPixel - 5, obsYPixel - 18, 4, 0, 2 * Math.PI);
+                        ctx.arc(obsXPixel + 8, obsYPixel - 18, 4, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                }
+            });
+
+            const targetXPixel = taskData.target.x * cellW + cellW / 2;
+            const targetYPixel = taskData.target.y * cellH + cellH / 2;
+            
+            if (currentLevelIndex === 4 && currentTaskIndex === 4) {
+                // หีบสมบัติปิดเปิดตามสถานะ
+                ctx.fillStyle = "#FFD166"; 
+                ctx.fillRect(targetXPixel - 20, targetYPixel - 15, 40, 30);
+                ctx.fillStyle = "#C79D3B";
+                ctx.fillRect(targetXPixel - 20, targetYPixel, 40, 15);
+                ctx.fillStyle = "#1F2E3D"; 
+                ctx.fillRect(targetXPixel - 4, targetYPixel - 2, 8, 8);
+            } else {
+                ctx.beginPath();
+                ctx.arc(targetXPixel - 6, targetYPixel + 5, 12, 0, 2 * Math.PI);
+                ctx.fillStyle = "#FF6B6B";
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(targetXPixel + 8, targetYPixel + 8, 10, 0, 2 * Math.PI);
+                ctx.fillStyle = "#E54E4E";
+                ctx.fill();
+            }
+
+            if (slimeAnim.isCasting) {
+                ctx.beginPath();
+                ctx.arc(slimeAnim.pixelX + 25, slimeAnim.pixelY, slimeAnim.spellAnimFrame * 1.5, 0, 2 * Math.PI);
+                ctx.strokeStyle = "rgba(163, 148, 242, 0.6)";
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+            const sx = slimeAnim.pixelX;
+            const sy = slimeAnim.pixelY + slimeAnim.bounceY;
+
+            ctx.beginPath();
+            ctx.ellipse(sx, sy, 24, 18, 0, 0, 2 * Math.PI);
+            ctx.fillStyle = "#88D9BC"; 
+            ctx.fill();
+            ctx.strokeStyle = "#5cbca2";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(sx - 7, sy - 2, 4, 0, 2 * Math.PI);
+            ctx.arc(sx + 7, sy - 2, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = "#1F2E3D";
+            ctx.fill();
+        }
+
+        // --------------------------------------------------------------
+        // 14. เครื่องมือเสริมความพึงพอใจและระบบ Console Log Helper
+        // --------------------------------------------------------------
+        function updateStatus(text, type) {
+            const bubble = document.getElementById('status-bubble');
+            const icon = document.getElementById('status-icon');
+            const textElement = document.getElementById('status-text');
+
+            textElement.innerText = text;
+
+            if (type === "success") {
+                bubble.className = "bg-emerald-50 border-2 border-emerald-200 text-emerald-800 rounded-2xl p-4 flex items-center gap-3 font-semibold text-sm shadow-sm w-full";
+                icon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i>`;
+            } else if (type === "error") {
+                bubble.className = "bg-rose-50 border-2 border-rose-200 text-rose-800 rounded-2xl p-4 flex items-center gap-3 font-semibold text-sm shadow-sm w-full";
+                icon.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-500 animate-shake"></i>`;
+            } else {
+                bubble.className = "bg-blue-50 border-2 border-blue-200 text-blue-800 rounded-2xl p-4 flex items-center gap-3 font-semibold text-sm shadow-sm w-full";
+                icon.innerHTML = `<i class="fa-solid fa-circle-info text-blue-500 animate-pulse"></i>`;
+            }
+        }
+
+        function logToConsole(text) {
+            const consoleBox = document.getElementById('console-output');
+            const line = document.createElement('div');
+            line.innerHTML = `&gt; ${text}`;
+            consoleBox.appendChild(line);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function showOverlay(title, desc, colorTheme, btnAction, btnText) {
+            const overlay = document.getElementById('result-overlay');
+            const oTitle = document.getElementById('overlay-title');
+            const oDesc = document.getElementById('overlay-desc');
+            const oBtn = document.getElementById('overlay-btn');
+            const oIcon = document.getElementById('overlay-icon');
+
+            oTitle.innerText = title;
+            oDesc.innerText = desc;
+            oBtn.innerText = btnText;
+
+            if (colorTheme === "rose") {
+                oIcon.innerText = "👾";
+                oBtn.className = "w-full bg-[#ff9f89] hover:bg-[#e58d79] text-white font-bold py-3 px-6 rounded-2xl transition-all shadow-md";
+            } else {
+                oIcon.innerText = "🎉";
+                oBtn.className = "w-full bg-[#88D9BC] hover:bg-[#6fc0a4] text-gray-800 font-bold py-3 px-6 rounded-2xl transition-all shadow-md";
+            }
+
+            oBtn.onclick = btnAction;
+            overlay.classList.remove('hidden');
+        }
+
+        function hideOverlay() {
+            document.getElementById('result-overlay').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
